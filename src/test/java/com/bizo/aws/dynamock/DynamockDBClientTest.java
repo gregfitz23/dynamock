@@ -24,12 +24,16 @@ import com.amazonaws.services.dynamodb.model.AttributeValue;
 import com.amazonaws.services.dynamodb.model.AttributeValueUpdate;
 import com.amazonaws.services.dynamodb.model.BatchGetItemRequest;
 import com.amazonaws.services.dynamodb.model.BatchGetItemResult;
+import com.amazonaws.services.dynamodb.model.BatchWriteItemRequest;
+import com.amazonaws.services.dynamodb.model.BatchWriteItemResult;
+import com.amazonaws.services.dynamodb.model.BatchWriteResponse;
 import com.amazonaws.services.dynamodb.model.ComparisonOperator;
 import com.amazonaws.services.dynamodb.model.Condition;
 import com.amazonaws.services.dynamodb.model.CreateTableRequest;
 import com.amazonaws.services.dynamodb.model.CreateTableResult;
 import com.amazonaws.services.dynamodb.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodb.model.DeleteItemResult;
+import com.amazonaws.services.dynamodb.model.DeleteRequest;
 import com.amazonaws.services.dynamodb.model.DeleteTableRequest;
 import com.amazonaws.services.dynamodb.model.DeleteTableResult;
 import com.amazonaws.services.dynamodb.model.GetItemRequest;
@@ -42,6 +46,7 @@ import com.amazonaws.services.dynamodb.model.ListTablesRequest;
 import com.amazonaws.services.dynamodb.model.ListTablesResult;
 import com.amazonaws.services.dynamodb.model.PutItemRequest;
 import com.amazonaws.services.dynamodb.model.PutItemResult;
+import com.amazonaws.services.dynamodb.model.PutRequest;
 import com.amazonaws.services.dynamodb.model.QueryRequest;
 import com.amazonaws.services.dynamodb.model.QueryResult;
 import com.amazonaws.services.dynamodb.model.ScalarAttributeType;
@@ -50,6 +55,7 @@ import com.amazonaws.services.dynamodb.model.ScanResult;
 import com.amazonaws.services.dynamodb.model.TableDescription;
 import com.amazonaws.services.dynamodb.model.UpdateItemRequest;
 import com.amazonaws.services.dynamodb.model.UpdateItemResult;
+import com.amazonaws.services.dynamodb.model.WriteRequest;
 
 public class DynamockDBClientTest {
 
@@ -293,6 +299,78 @@ public class DynamockDBClientTest {
   }
   
   @Test
+  public void testBatchWriteItem() {
+    final List<Map<String, AttributeValue>> items = setupQueryItems(false);
+    final BatchWriteItemRequest request = new BatchWriteItemRequest();
+    
+    final List<WriteRequest> writeRequests = new ArrayList<WriteRequest>();
+    for(Map<String, AttributeValue> item : items) {
+      final PutRequest putRequest = new PutRequest().withItem(item);
+      writeRequests.add(new WriteRequest().withPutRequest(putRequest));
+    }
+    
+    final Map<String, List<WriteRequest>> writeItems = new HashMap<String, List<WriteRequest>>();
+    writeItems.put(hashAndRangeTableName, writeRequests);
+    
+    request.withRequestItems(writeItems);
+    
+    final BatchWriteItemResult result = db.batchWriteItem(request);
+    final BatchWriteResponse response = result.getResponses().get(hashAndRangeTableName);
+    assertNotNull(response);
+
+    for(Map<String, AttributeValue> item : items) {
+      final GetItemResult itemResult = getItem(item.get(hashKeyName).getS(), item.get(rangeKeyName).getS());
+      assertEquals(item, itemResult.getItem());
+    }
+  }
+  
+  @Test
+  public void testBatchWriteItemDelete() {
+    final List<Map<String, AttributeValue>> items = setupQueryItems();
+    final BatchWriteItemRequest request = new BatchWriteItemRequest();
+    
+    final List<WriteRequest> writeRequests = new ArrayList<WriteRequest>();
+    for(Map<String, AttributeValue> item : items) {
+      final Key key = new Key()
+        .withHashKeyElement(item.get(hashKeyName))
+        .withRangeKeyElement(item.get(rangeKeyName));
+      final DeleteRequest deleteRequest = new DeleteRequest().withKey(key);
+      writeRequests.add(new WriteRequest().withDeleteRequest(deleteRequest));
+    }
+    
+    final Map<String, List<WriteRequest>> writeItems = new HashMap<String, List<WriteRequest>>();
+    writeItems.put(hashAndRangeTableName, writeRequests);
+    
+    request.withRequestItems(writeItems);
+    
+    final BatchWriteItemResult result = db.batchWriteItem(request);
+    final BatchWriteResponse response = result.getResponses().get(hashAndRangeTableName);
+    assertNotNull(response);
+
+    for(Map<String, AttributeValue> item : items) {
+      final GetItemResult itemResult = getItem(item.get(hashKeyName).getS(), item.get(rangeKeyName).getS());
+      assertNull(itemResult.getItem());
+    }
+  }
+  
+  @Test(expected=AmazonServiceException.class)
+  public void testBatchWriteItemLengthConstraint() {
+    final BatchWriteItemRequest request = new BatchWriteItemRequest();
+    
+    final List<WriteRequest> writeRequests = new ArrayList<WriteRequest>();
+    for(int i = 0; i<30; i++) {
+      final PutRequest putRequest = new PutRequest().withItem(new HashMap<String, AttributeValue>());
+      writeRequests.add(new WriteRequest().withPutRequest(putRequest));
+    }
+    
+    final Map<String, List<WriteRequest>> writeItems = new HashMap<String, List<WriteRequest>>();
+    writeItems.put(hashAndRangeTableName, writeRequests);
+    request.withRequestItems(writeItems);
+    
+    db.batchWriteItem(request);
+  }
+  
+  @Test
   public void testQueryNoRangeCondition() {
     List<Map<String, AttributeValue>> expectedItems = setupQueryItems();
     Map<String, AttributeValue> item = expectedItems.get(0);
@@ -458,22 +536,32 @@ public class DynamockDBClientTest {
   }
   
   private List<Map<String, AttributeValue>> setupQueryItems() {
+    return setupQueryItems(true);
+  }
+  
+  private List<Map<String, AttributeValue>> setupQueryItems(final boolean store) {
     final Map<String, AttributeValue> item2 = new HashMap<String, AttributeValue>();
     for(Entry<String, AttributeValue> entry : item.entrySet()) {
       item2.put(entry.getKey(), entry.getValue());
     }
     
     item.put(rangeKeyName, new AttributeValue().withS(itemRangeKeyValue));
-    putItem(hashAndRangeTableName, item);
     
     final AttributeValue item2RangeKey = new AttributeValue().withS("item 2 range key");
     item2.put(rangeKeyName, item2RangeKey);
     item2.put(itemStringAttributeName, new AttributeValue().withS("new item findthisstring string attribute value"));
-    putItem(hashAndRangeTableName, item2);
+    
     
     final Map<String, AttributeValue> notFoundItem = new HashMap<String, AttributeValue>();
     notFoundItem.put(hashKeyName, new AttributeValue().withS("something else that shouldn't be found"));
-    putItem(hashAndRangeTableName, notFoundItem);
+    notFoundItem.put(rangeKeyName, new AttributeValue().withS("not found range key name"));
+    
+    
+    if (store) {
+      putItem(hashAndRangeTableName, item);
+      putItem(hashAndRangeTableName, item2);
+      putItem(hashAndRangeTableName, notFoundItem);  
+    }
     
     final List<Map<String, AttributeValue>> items = new ArrayList<Map<String, AttributeValue>>();
     items.add(item);
@@ -498,8 +586,15 @@ public class DynamockDBClientTest {
       key.setRangeKeyElement(rangeKey);
     }
     
+    String tableName;
+    if (rangeKeyValue != null) {
+      tableName = hashAndRangeTableName;
+    } else {
+      tableName = hashKeyOnlyTableName;
+    }
+    
     request
-      .withTableName(hashKeyOnlyTableName)
+      .withTableName(tableName)
       .withKey(key);
     
     GetItemResult result = db.getItem(request);

@@ -22,12 +22,14 @@ import com.amazonaws.services.dynamodb.model.BatchGetItemResult;
 import com.amazonaws.services.dynamodb.model.BatchResponse;
 import com.amazonaws.services.dynamodb.model.BatchWriteItemRequest;
 import com.amazonaws.services.dynamodb.model.BatchWriteItemResult;
+import com.amazonaws.services.dynamodb.model.BatchWriteResponse;
 import com.amazonaws.services.dynamodb.model.ComparisonOperator;
 import com.amazonaws.services.dynamodb.model.Condition;
 import com.amazonaws.services.dynamodb.model.CreateTableRequest;
 import com.amazonaws.services.dynamodb.model.CreateTableResult;
 import com.amazonaws.services.dynamodb.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodb.model.DeleteItemResult;
+import com.amazonaws.services.dynamodb.model.DeleteRequest;
 import com.amazonaws.services.dynamodb.model.DeleteTableRequest;
 import com.amazonaws.services.dynamodb.model.DeleteTableResult;
 import com.amazonaws.services.dynamodb.model.DescribeTableRequest;
@@ -42,6 +44,7 @@ import com.amazonaws.services.dynamodb.model.ListTablesRequest;
 import com.amazonaws.services.dynamodb.model.ListTablesResult;
 import com.amazonaws.services.dynamodb.model.PutItemRequest;
 import com.amazonaws.services.dynamodb.model.PutItemResult;
+import com.amazonaws.services.dynamodb.model.PutRequest;
 import com.amazonaws.services.dynamodb.model.QueryRequest;
 import com.amazonaws.services.dynamodb.model.QueryResult;
 import com.amazonaws.services.dynamodb.model.ScanRequest;
@@ -52,6 +55,7 @@ import com.amazonaws.services.dynamodb.model.UpdateItemRequest;
 import com.amazonaws.services.dynamodb.model.UpdateItemResult;
 import com.amazonaws.services.dynamodb.model.UpdateTableRequest;
 import com.amazonaws.services.dynamodb.model.UpdateTableResult;
+import com.amazonaws.services.dynamodb.model.WriteRequest;
 
 /**
  * A client for mocking AmazonDynamoDBClient locally, removing the need for a network connection during testing.
@@ -376,6 +380,59 @@ public class DynamockDBClient implements AmazonDynamoDB {
     return result;
     
   }
+  
+  /**
+   * Supports batch deletes and puts 
+   */
+  @Override
+  public BatchWriteItemResult batchWriteItem(BatchWriteItemRequest batchWriteItemRequest) 
+      throws AmazonServiceException, AmazonClientException {
+    
+    final Map<String, List<WriteRequest>> tableRequestItemMap = batchWriteItemRequest.getRequestItems();
+    final BatchWriteItemResult result = new BatchWriteItemResult();
+    final Map<String, BatchWriteResponse> responses = new HashMap<String, BatchWriteResponse>();
+    double totalCount = 0;
+    
+    for (Entry<String, List<WriteRequest>> entry : tableRequestItemMap.entrySet()) {
+      final String tableName = entry.getKey();
+      final List<WriteRequest> writeRequests = entry.getValue();
+      final DynamockDBTable table = getTable(tableName);
+      final BatchWriteResponse response = new BatchWriteResponse();
+      double count = 0;
+      
+      
+      for (WriteRequest writeRequest : writeRequests) {
+        final PutRequest putRequest = writeRequest.getPutRequest();
+        final DeleteRequest deleteRequest = writeRequest.getDeleteRequest();
+        
+        //puts
+        if (putRequest != null) {
+          Map<String, AttributeValue> item = putRequest.getItem();
+          table.createItem(item);
+          count++;
+          totalCount++;
+        }
+        
+        //deletes
+        if (deleteRequest != null) {
+          final Key key = deleteRequest.getKey();
+          table.deleteItem(key);
+          count++;
+          totalCount++;
+        }
+      }
+      
+      response.setConsumedCapacityUnits(count);
+      responses.put(tableName, response);
+    }
+    
+    if (totalCount > 25) {
+      throw new AmazonServiceException("1 validation error detected: failed to satisfy constraint: Length must be between 1-25");      
+    }
+
+    return result.withResponses(responses);
+  }
+
 
   /**
    * List all tables
@@ -502,12 +559,5 @@ public class DynamockDBClient implements AmazonDynamoDB {
         }
       }
     });
-  }
-
-  @Override
-  public BatchWriteItemResult batchWriteItem(BatchWriteItemRequest arg0)
-      throws AmazonServiceException, AmazonClientException {
-    // TODO Auto-generated method stub
-    throw new java.lang.UnsupportedOperationException("BatchWriteItem is not supported");
   }
 }
