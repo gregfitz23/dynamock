@@ -14,29 +14,29 @@ import com.amazonaws.services.dynamodb.model.Key;
  */
 public interface DynamockDBTable {
 
-  public abstract String getTableName();
+  public String getTableName();
 
-  public abstract void setTableName(String tableName);
+  public void setTableName(String tableName);
 
-  public abstract String getHashKeyName();
+  public String getHashKeyName();
 
-  public abstract void setHashKeyName(String hashKeyName);
+  public void setHashKeyName(String hashKeyName);
 
-  public abstract String getRangeKeyName();
+  public String getRangeKeyName();
 
-  public abstract void setRangeKeyName(String rangeKeyName);
+  public void setRangeKeyName(String rangeKeyName);
 
-  public abstract Map<AttributeValue, DynamockDBItem> getItemsForHashKey(
-      final AttributeValue hashKey);
+  public Map<AttributeValue, DynamockDBItem> getItemsForHashKey(
+      AttributeValue hashKey);
 
-  public abstract List<DynamockDBItem> getAllItems();
+  public List<DynamockDBItem> getAllItems();
 
-  public abstract DynamockDBItem getItem(final Key key);
+  public DynamockDBItem getItem(Key key);
 
-  public abstract void putItem(final Key key, final DynamockDBItem item);
+  public void putItem(Key key, DynamockDBItem item);
   
-  public abstract DynamockDBItem createItem(final Map<String, AttributeValue> item);
+  public DynamockDBItem createItem(Map<String, AttributeValue> item);
 
-  public abstract void deleteItem(final Key key);
+  public void deleteItem(Key key);
 
 }

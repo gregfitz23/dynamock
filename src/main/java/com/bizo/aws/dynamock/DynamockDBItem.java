@@ -11,11 +11,11 @@ import com.amazonaws.services.dynamodb.model.AttributeValue;
  */
 public interface DynamockDBItem {
 
-  public abstract Map<String, AttributeValue> toMap();
+  public Map<String, AttributeValue> toMap();
 
-  public abstract AttributeValue getAttributeValue(final String attribute);
+  public AttributeValue getAttributeValue(final String attribute);
 
-  public abstract void setAttributeValue(final String attribute,
-      final AttributeValue value);
+  public void setAttributeValue(String attribute,
+      AttributeValue value);
 
 }
