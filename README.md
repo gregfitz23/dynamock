@@ -37,3 +37,7 @@ Contributing
 3. Implement your change
 4. Ensure all tests pass
 5. Push your repo and submit a pull request
+
+Acknowledgements
+-------------
+This library was developed in conjunction with [Bizo, Inc.](http://www.bizo.com).
