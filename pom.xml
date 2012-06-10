@@ -4,9 +4,9 @@
   <groupId>com.bizo</groupId>
   <artifactId>dynamock</artifactId>
   <packaging>jar</packaging>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.1.0</version>
   <name>dynamock</name>
-  <url>http://maven.apache.org</url>
+  <url>https://github.com/gregfitz23/dynamock</url>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
