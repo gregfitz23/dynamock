@@ -1,4 +1,4 @@
-dynamock
+Dynamock
 ========
 
 Overview
@@ -8,7 +8,9 @@ An Amazon DynamoDB drop in replacement for running tests locally and in-memory.
 Usage
 -------
 Simply add the dynamock jar to your project and use an instance of com.bizo.aws.dynamock.DynamockDBClient for your com.amazonaws.services.dynamodb.AmazonDynamoDB implementation.
+
     AmazonDynamoDB client = new DynamockDBClient()
+
 Dynamock is currently built against [aws-java-sdk](https://github.com/amazonwebservices/aws-sdk-for-java) version 1.3.10
 
 DynamockDBTable data storage implementations
