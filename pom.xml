@@ -4,7 +4,7 @@
   <groupId>com.bizo</groupId>
   <artifactId>dynamock</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <name>dynamock</name>
   <url>http://maven.apache.org</url>
   <dependencies>
