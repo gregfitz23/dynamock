@@ -93,25 +93,17 @@ public class DynamockDBTableHashMapImpl implements DynamockDBTable {
     return retList;
   }
   
-  /* (non-Javadoc)
-   * @see com.bizo.comscore.aws.DynomockDBTable#getItem(com.amazonaws.services.dynamodb.model.Key)
-   */
-  @Override
-  public DynamockDBItem getItem(final Key key) {
-    final AttributeValue hashKey = key.getHashKeyElement();
-    final AttributeValue rangeKey = key.getRangeKeyElement();
-    
-    return getItem(hashKey, rangeKey);
-  }
-  
   /**
    * Lookup an item by hashkey and rangekey.  If range key is null, use a placeholder.
    * @param hashKey
    * @param rangeKey
    * @return
    */
-  public DynamockDBItem getItem(final AttributeValue hashKey, final AttributeValue rangeKey) {
-    AttributeValue lookupRangeKey = rangeKey;
+  @Override
+  public DynamockDBItem getItem(final Key key) {
+    final AttributeValue hashKey = key.getHashKeyElement();
+    AttributeValue lookupRangeKey = key.getRangeKeyElement();
+    
     if (lookupRangeKey == null)
       lookupRangeKey = PLACEHOLDER;
     
@@ -169,20 +161,16 @@ public class DynamockDBTableHashMapImpl implements DynamockDBTable {
     rangeKeyMap.put(lookupRangeKey, itemObj);
   }
   
-  /* (non-Javadoc)
-   * @see com.bizo.comscore.aws.DynomockDBTable#deleteItem(com.amazonaws.services.dynamodb.model.Key)
-   */
-  @Override
-  public void deleteItem(final Key key) {
-    deleteItem(key.getHashKeyElement(), key.getRangeKeyElement());
-  }
-  
   /**
    * Delete an item from the table by removing it from the hash.
    * @param hashKey
    * @param rangeKey
    */
-  public void deleteItem(final AttributeValue hashKey, final AttributeValue rangeKey) {
+  @Override
+  public void deleteItem(final Key key) {
+    final AttributeValue hashKey = key.getHashKeyElement();
+    final AttributeValue rangeKey = key.getRangeKeyElement();
+    
     final Map<AttributeValue, DynamockDBItem> rangeKeyMap = items.get(hashKey);
     if (rangeKeyMap == null) {
       throw new ResourceNotFoundException("Item not found");
