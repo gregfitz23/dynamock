@@ -472,6 +472,97 @@ public class DynamockDBClientTest {
   }
   
   @Test
+  public void testScanNotContains() {
+    final List<Map<String, AttributeValue>> expectedItems = setupQueryItems();
+    final Map<String, AttributeValue> item1 = expectedItems.get(0); 
+    final Map<String, AttributeValue> item2 = expectedItems.get(1); //contains value findthisstring
+    final Map<String, AttributeValue> item3 = expectedItems.get(2); // does not have the scanned attribute value
+
+    final Map<String, Condition> scanFilter = new HashMap<String, Condition>();
+    scanFilter.put(
+        itemStringAttributeName, 
+        new Condition()
+          .withAttributeValueList(new AttributeValue().withS("findthisstring"))
+          .withComparisonOperator(ComparisonOperator.NOT_CONTAINS)
+    );
+    
+    final ScanRequest request = new ScanRequest();
+    request
+      .withTableName(hashAndRangeTableName)
+      .withScanFilter(scanFilter);
+    
+    ScanResult result = db.scan(request);
+    final List<Map<String, AttributeValue>> items = result.getItems();
+    assertTrue(items.contains(item1));
+    assertFalse(items.contains(item2));
+    assertFalse(items.contains(item3));
+    
+    assertEquals(Integer.valueOf(1), result.getCount());
+    assertEquals(Integer.valueOf(3), result.getScannedCount());
+  }
+  
+  @Test
+  public void testScanNull() {
+    final List<Map<String, AttributeValue>> expectedItems = setupQueryItems();
+    final Map<String, AttributeValue> item1 = expectedItems.get(0); 
+    final Map<String, AttributeValue> item2 = expectedItems.get(1); //contains value findthisstring
+    final Map<String, AttributeValue> item3 = expectedItems.get(2); // does not have the scanned attribute value
+
+    final Map<String, Condition> scanFilter = new HashMap<String, Condition>();
+    scanFilter.put(
+        itemStringAttributeName, 
+        new Condition()
+          .withAttributeValueList(new AttributeValue().withS("findthisstring"))
+          .withComparisonOperator(ComparisonOperator.NULL)
+    );
+    
+    final ScanRequest request = new ScanRequest();
+    request
+      .withTableName(hashAndRangeTableName)
+      .withScanFilter(scanFilter);
+    
+    ScanResult result = db.scan(request);
+    final List<Map<String, AttributeValue>> items = result.getItems();
+    assertFalse(items.contains(item1));
+    assertFalse(items.contains(item2));
+    assertTrue(items.contains(item3));
+    
+    assertEquals(Integer.valueOf(1), result.getCount());
+    assertEquals(Integer.valueOf(3), result.getScannedCount());
+  }
+  
+  
+  @Test
+  public void testScanNotNull() {
+    final List<Map<String, AttributeValue>> expectedItems = setupQueryItems();
+    final Map<String, AttributeValue> item1 = expectedItems.get(0); 
+    final Map<String, AttributeValue> item2 = expectedItems.get(1); //contains value findthisstring
+    final Map<String, AttributeValue> item3 = expectedItems.get(2); // does not have the scanned attribute value
+
+    final Map<String, Condition> scanFilter = new HashMap<String, Condition>();
+    scanFilter.put(
+        itemStringAttributeName, 
+        new Condition()
+          .withAttributeValueList(new AttributeValue().withS("findthisstring"))
+          .withComparisonOperator(ComparisonOperator.NOT_NULL)
+    );
+    
+    final ScanRequest request = new ScanRequest();
+    request
+      .withTableName(hashAndRangeTableName)
+      .withScanFilter(scanFilter);
+    
+    final ScanResult result = db.scan(request);
+    final List<Map<String, AttributeValue>> items = result.getItems();
+    assertTrue(items.contains(item1));
+    assertTrue(items.contains(item2));
+    assertFalse(items.contains(item3));
+    
+    assertEquals(Integer.valueOf(2), result.getCount());
+    assertEquals(Integer.valueOf(3), result.getScannedCount());
+  }
+  
+  @Test
   public void testDeleteItem() {
     putItem(hashKeyOnlyTableName, item);
     

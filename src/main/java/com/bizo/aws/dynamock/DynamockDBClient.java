@@ -107,9 +107,7 @@ public class DynamockDBClient implements AmazonDynamoDB {
       final Map<AttributeValue, DynamockDBItem> valueItemMap = new HashMap<AttributeValue, DynamockDBItem>();
       for (DynamockDBItem item: itemObjs) {
         final AttributeValue value = item.getAttributeValue(attributeName);
-        if (value != null) {
-          valueItemMap.put(value, item);
-        }
+        valueItemMap.put(value, item);
       }
       itemObjs = filterByCondition(valueItemMap, condition);
     }
@@ -500,12 +498,17 @@ public class DynamockDBClient implements AmazonDynamoDB {
   private boolean matchesCondition(final AttributeValue attributeValue, final Condition condition) {
     final List<AttributeValue> targets = condition.getAttributeValueList();
     final ComparisonOperator comparisonOperator = ComparisonOperator.valueOf(condition.getComparisonOperator());
+    
+    if (attributeValue == null) { // if attribute value is null, the only matching ComparisonOperator is NULL
+      return comparisonOperator == ComparisonOperator.NULL;
+    }
+    
     final String attributeValueStr = getStringForAttributeValue(attributeValue); 
     
     switch(comparisonOperator) {
       case EQ:
         return targets.contains(attributeValue);
-      case CONTAINS: 
+      case CONTAINS:
         for (AttributeValue target : targets) {
           final String targetString = target.getS();
           if (attributeValueStr.contains(targetString)) {
@@ -513,8 +516,20 @@ public class DynamockDBClient implements AmazonDynamoDB {
           }
         }
         return false;
+      case NOT_CONTAINS:
+        for (AttributeValue target : targets) {
+          final String targetString = target.getS();
+          if (attributeValueStr.contains(targetString)) {
+            return false;
+          }
+        }
+        return true;
+      case NOT_NULL:
+        return true; //null values are weeded out above.
+      case NULL:
+        return false; //null values are weeded out above.
       default: 
-        throw new java.lang.UnsupportedOperationException("Range query with " + comparisonOperator);  
+        throw new java.lang.UnsupportedOperationException("Query or scan with " + comparisonOperator);  
     }
   }
 
