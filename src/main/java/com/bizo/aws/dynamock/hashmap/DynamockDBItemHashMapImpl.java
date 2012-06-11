@@ -1,9 +1,10 @@
-package com.bizo.aws.dynamock;
+package com.bizo.aws.dynamock.hashmap;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.amazonaws.services.dynamodb.model.AttributeValue;
+import com.bizo.aws.dynamock.DynamockDBItem;
 
 /**
  * An implementation of DynamockDBItem utilizing in-memory HashMaps as item stores.

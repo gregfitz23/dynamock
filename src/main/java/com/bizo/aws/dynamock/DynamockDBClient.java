@@ -38,7 +38,6 @@ import com.amazonaws.services.dynamodb.model.GetItemRequest;
 import com.amazonaws.services.dynamodb.model.GetItemResult;
 import com.amazonaws.services.dynamodb.model.Key;
 import com.amazonaws.services.dynamodb.model.KeySchema;
-import com.amazonaws.services.dynamodb.model.KeySchemaElement;
 import com.amazonaws.services.dynamodb.model.KeysAndAttributes;
 import com.amazonaws.services.dynamodb.model.ListTablesRequest;
 import com.amazonaws.services.dynamodb.model.ListTablesResult;
@@ -56,6 +55,7 @@ import com.amazonaws.services.dynamodb.model.UpdateItemResult;
 import com.amazonaws.services.dynamodb.model.UpdateTableRequest;
 import com.amazonaws.services.dynamodb.model.UpdateTableResult;
 import com.amazonaws.services.dynamodb.model.WriteRequest;
+import com.bizo.aws.dynamock.hashmap.DynamockDBTableManagerHashMapImpl;
 
 /**
  * A client for mocking AmazonDynamoDBClient locally, removing the need for a network connection during testing.
@@ -66,17 +66,16 @@ import com.amazonaws.services.dynamodb.model.WriteRequest;
  *
  */
 public class DynamockDBClient implements AmazonDynamoDB {
-  
-  private final Map<String, DynamockDBTable> tables = new HashMap<String, DynamockDBTable>();
-  private Class<? extends DynamockDBTable> tableClass; 
+
+  private DynamockDBTableManager tableManager;
   
   public DynamockDBClient() {
-    this(DynamockDBTableHashMapImpl.class);
+    this(new DynamockDBTableManagerHashMapImpl());
   }
   
-  public DynamockDBClient(final Class<? extends DynamockDBTable> tableClass) {
+  public DynamockDBClient(final DynamockDBTableManager tableManager) {
     super();
-    this.tableClass = tableClass;
+    this.tableManager = tableManager;
   }
   
   @Override
@@ -137,20 +136,10 @@ public class DynamockDBClient implements AmazonDynamoDB {
     
     final String tableName = createTableRequest.getTableName();
     final KeySchema keySchema = createTableRequest.getKeySchema();
-    final KeySchemaElement hashKey = keySchema.getHashKeyElement();
-    final KeySchemaElement rangeKey = keySchema.getRangeKeyElement();
     
     try {
       // setup table and keys
-      final DynamockDBTable table = tableClass.newInstance();
-      table.setTableName(tableName);
-      table.setHashKeyName(hashKey.getAttributeName());
-      if (rangeKey != null) {
-        table.setRangeKeyName(rangeKey.getAttributeName());
-      }
-      
-      // store the table
-      tables.put(tableName, table);
+      tableManager.createTable(tableName, keySchema);
     } catch (Exception e) {
       throw new AmazonClientException(e.getMessage());
     }
@@ -287,8 +276,7 @@ public class DynamockDBClient implements AmazonDynamoDB {
     final String tableName = deleteTableRequest.getTableName();
     // trigger an exception if table doesn't exist
     getTable(tableName);
-    
-    tables.remove(tableName);
+    tableManager.deleteTable(tableName);
     
     final TableDescription tableDescription = new TableDescription()
       .withTableName(tableName)
@@ -441,8 +429,14 @@ public class DynamockDBClient implements AmazonDynamoDB {
   public ListTablesResult listTables() throws AmazonServiceException,
       AmazonClientException {
     
-    ListTablesResult result = new ListTablesResult();
-    result.setTableNames(tables.keySet());
+    final ListTablesResult result = new ListTablesResult();
+    final Collection<DynamockDBTable> tables = tableManager.getTables();
+
+    final List<String> tableNames = new ArrayList<String>();
+    for(DynamockDBTable table : tables) {
+      tableNames.add(table.getTableName());
+    }
+    result.setTableNames(tableNames);
     
     return result;
   }
@@ -467,7 +461,7 @@ public class DynamockDBClient implements AmazonDynamoDB {
   private DynamockDBTable getTable(final String tableName)
     throws AmazonServiceException {
     
-    final DynamockDBTable table = tables.get(tableName);
+    final DynamockDBTable table = tableManager.getTable(tableName);
     if (table == null) {
       throw new AmazonServiceException(tableName + " does not exist");
     }

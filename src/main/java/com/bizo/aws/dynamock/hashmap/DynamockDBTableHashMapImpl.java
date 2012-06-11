@@ -1,4 +1,4 @@
-package com.bizo.aws.dynamock;
+package com.bizo.aws.dynamock.hashmap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +8,8 @@ import java.util.Map;
 import com.amazonaws.services.dynamodb.model.AttributeValue;
 import com.amazonaws.services.dynamodb.model.Key;
 import com.amazonaws.services.dynamodb.model.ResourceNotFoundException;
+import com.bizo.aws.dynamock.DynamockDBItem;
+import com.bizo.aws.dynamock.DynamockDBTable;
 
 /**
  * An implementation of DynamockDBTable utilizing HashMaps as the underlying table storage.
