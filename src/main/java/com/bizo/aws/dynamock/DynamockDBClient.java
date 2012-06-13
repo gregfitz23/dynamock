@@ -135,12 +135,12 @@ public class DynamockDBClient implements AmazonDynamoDB {
     final String tableName = createTableRequest.getTableName();
     final KeySchema keySchema = createTableRequest.getKeySchema();
     
-    try {
+//    try {
       // setup table and keys
       tableManager.createTable(tableName, keySchema);
-    } catch (Exception e) {
-      throw new AmazonClientException(e.getMessage());
-    }
+//    } catch (Exception e) {
+//      throw new AmazonClientException(e.getMessage());
+//    }
 
     final CreateTableResult result = new CreateTableResult();
     final TableDescription tableDescription = new TableDescription()
