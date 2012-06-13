@@ -16,16 +16,23 @@ Dynamock is currently built against [aws-java-sdk](https://github.com/amazonwebs
 DynamockDBTable data storage implementations
 --------------
 Currently all data storage is in memory and non-persistent.  This is perfect for testing, less so for local development.  Future versions will include a mechanism for persisting data locally.  All implementations must implement the DynamockDBTable interface.
-*DynamockDBTableHashMapImpl* - the default, in memory, non-persistent data storage.
-*DynmamockDBTableRedisImpl (planned)* - a Redis backed data store
 
+*DynamockDBTableHashMapImpl* - the default, in memory, non-persistent data storage.
+
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableHashMapImpl())
+
+*DynmamockDBTableMongoDBImpl* - a MongoDB backed data store
+
+    // default host and port
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableMongoDBImpl("my-database-name"))
+    // custom host and port
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableMongoDBImpl("localhost", 12345, "my-database-name"))
 
 Unsupported operations
 -------------------
 The following operations have not yet been implemented and will throw an UnsupportedOperationException if used.  They may be implemented in future versions:
 * setEndpoint
 * updateTable
-* batchWriteItem
 * describeTable
 * getCachedResponseMetadata
 * shutdown
