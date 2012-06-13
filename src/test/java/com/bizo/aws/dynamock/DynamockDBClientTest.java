@@ -57,9 +57,9 @@ import com.amazonaws.services.dynamodb.model.UpdateItemRequest;
 import com.amazonaws.services.dynamodb.model.UpdateItemResult;
 import com.amazonaws.services.dynamodb.model.WriteRequest;
 
-public class DynamockDBClientTest {
+public abstract class DynamockDBClientTest {
 
-  private AmazonDynamoDB db;
+  protected AmazonDynamoDB db;
   private final String hashKeyName = "test hash key";
   private final String rangeKeyName = "test range key";
   
@@ -88,7 +88,8 @@ public class DynamockDBClientTest {
   
   @Before
   public void setup() {
-    db = new DynamockDBClient();
+    initializeDB();
+    
     createTable(hashKeyOnlyTableName, hashKeyName);
     createTable(hashAndRangeTableName, hashKeyName, rangeKeyName);
     
@@ -100,6 +101,8 @@ public class DynamockDBClientTest {
     item.put(itemStringSetAttributeName, new AttributeValue().withSS(itemStringSetAttributeValue));
     item.put(itemNumberSetAttributeName, new AttributeValue().withNS(itemNumberSetAttributValue));
   }
+  
+  protected abstract void initializeDB();
   
   /**
    * Test that create table returns a valid result.
