@@ -19,14 +19,16 @@ Currently all data storage is in memory and non-persistent.  This is perfect for
 
 *DynamockDBTableHashMapImpl* - the default, in memory, non-persistent data storage.
 
-    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableHashMapImpl())
+    AmazonDynamoDB client = new DynamockDBClient()
+    // is equivalent to
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableManagerHashMapImpl())
 
 *DynmamockDBTableMongoDBImpl* - a MongoDB backed data store
 
     // default host and port
-    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableMongoDBImpl("my-database-name"))
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableManagerMongoDBImpl("my-database-name"))
     // custom host and port
-    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableMongoDBImpl("localhost", 12345, "my-database-name"))
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableManagerMongoDBImpl("localhost", 12345, "my-database-name"))
 
 Unsupported operations
 -------------------
