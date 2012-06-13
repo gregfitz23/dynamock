@@ -3,7 +3,8 @@ Dynamock
 
 Overview
 --------
-An Amazon DynamoDB drop in replacement for running tests locally and in-memory.
+An Amazon DynamoDB drop-in replacement for in-memory testing and local data storage.
+
 
 Usage
 -------
