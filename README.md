@@ -3,7 +3,8 @@ Dynamock
 
 Overview
 --------
-An Amazon DynamoDB drop in replacement for running tests locally and in-memory.
+An Amazon DynamoDB drop-in replacement for in-memory testing and local data storage.
+
 
 Usage
 -------
@@ -15,18 +16,20 @@ Dynamock is currently built against [aws-java-sdk](https://github.com/amazonwebs
 
 DynamockDBTable data storage implementations
 --------------
-Currently all data storage is in memory and non-persistent.  This is perfect for testing, less so for local development.  Future versions will include a mechanism for persisting data locally.  All implementations must implement the DynamockDBTable interface.
+There are two storage options:
 
-*DynamockDBTableHashMapImpl* - the default, in memory, non-persistent data storage.
+*DynamockDBTableHashMapImpl* - the default, in memory, non-persistent data storage.  Very fast, perfect for testing.  Tables are modeled as HashMaps.
 
-    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableHashMapImpl())
+    AmazonDynamoDB client = new DynamockDBClient()
+    // is equivalent to
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableManagerHashMapImpl())
 
-*DynmamockDBTableMongoDBImpl* - a MongoDB backed data store
+*DynmamockDBTableMongoDBImpl* - a MongoDB backed data store. Good for persisted local development.  Tables are modeled as Mongo collections.  AttributeValues are serialized as native POJOs.
 
     // default host and port
-    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableMongoDBImpl("my-database-name"))
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableManagerMongoDBImpl("my-database-name"))
     // custom host and port
-    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableMongoDBImpl("localhost", 12345, "my-database-name"))
+    AmazonDynamoDB client = new DynamockDBClient(new DynamockDBTableManagerMongoDBImpl("localhost", 12345, "my-database-name"))
 
 Unsupported operations
 -------------------
